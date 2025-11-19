@@ -13,6 +13,7 @@ const todoInput = document.getElementById('todoInput');
 const addButton = document.getElementById('addButton');
 const incompleteTodosList = document.getElementById('incompleteTodos');
 const completedTodosList = document.getElementById('completedTodos');
+const clearAllButton = document.getElementById('clearAllButton');
 
 // TODOデータの読み込み
 let todos = loadTodosFromStorage();
@@ -27,6 +28,7 @@ todoInput.addEventListener('keypress', (e) => {
         addTodo();
     }
 });
+clearAllButton.addEventListener('click', clearAllTodos);
 
 /**
  * ローカルストレージからTODOを読み込む
@@ -109,11 +111,30 @@ function returnTodo(id) {
 }
 
 /**
+ * すべてのTODOを削除
+ */
+function clearAllTodos() {
+    if (todos.length === 0) return;
+    if (confirm('すべてのTODOを削除しますか？')) {
+        todos = [];
+        localStorage.removeItem(STORAGE_KEY);
+        renderTodos();
+    }
+}
+
+/**
  * TODOリストを描画
  */
 function renderTodos() {
     renderTodoList(incompleteTodosList, todos.filter(t => !t.completed), false);
     renderTodoList(completedTodosList, todos.filter(t => t.completed), true);
+    
+    // 全削除ボタンの表示/非表示
+    if (todos.length > 0) {
+        clearAllButton.style.display = 'block';
+    } else {
+        clearAllButton.style.display = 'none';
+    }
 }
 
 /**

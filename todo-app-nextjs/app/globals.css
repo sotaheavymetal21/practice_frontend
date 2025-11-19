@@ -179,17 +179,6 @@ h2 {
     margin-bottom: 10px;
 }
 
-.header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.header-section h1 {
-    margin: 0;
-}
-
 .clear-all-button {
     padding: 8px 16px;
     background-color: #ff9800;
@@ -206,4 +195,3 @@ h2 {
     background-color: #f57c00;
     transform: scale(1.05);
 }
-
