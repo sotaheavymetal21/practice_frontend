@@ -1,109 +1,145 @@
 // TODOアプリのメインロジック
 
+// 定数定義
+const STORAGE_KEY = 'todos';
+const MESSAGES = {
+    emptyInput: 'TODOを入力してください',
+    emptyIncomplete: '未完了のTODOはありません',
+    emptyCompleted: '完了したTODOはありません'
+};
+
 // DOM要素の取得
 const todoInput = document.getElementById('todoInput');
 const addButton = document.getElementById('addButton');
 const incompleteTodosList = document.getElementById('incompleteTodos');
 const completedTodosList = document.getElementById('completedTodos');
 
-// TODOデータの保存（簡易的な実装）
-let todos = JSON.parse(localStorage.getItem('todos')) || [];
+// TODOデータの読み込み
+let todos = loadTodosFromStorage();
 
 // 初期表示
 renderTodos();
 
-// 追加ボタンのイベントリスナー
+// イベントリスナーの設定
 addButton.addEventListener('click', addTodo);
-
-// Enterキーで追加
 todoInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         addTodo();
     }
 });
 
-// TODOを追加する関数
+/**
+ * ローカルストレージからTODOを読み込む
+ */
+function loadTodosFromStorage() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+        console.error('TODOの読み込みに失敗しました:', error);
+        return [];
+    }
+}
+
+/**
+ * ローカルストレージにTODOを保存
+ */
+function saveTodosToStorage() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    } catch (error) {
+        console.error('TODOの保存に失敗しました:', error);
+    }
+}
+
+/**
+ * TODOを追加
+ */
 function addTodo() {
     const text = todoInput.value.trim();
     
-    if (text === '') {
-        alert('TODOを入力してください');
+    if (!text) {
+        alert(MESSAGES.emptyInput);
         return;
     }
     
-    const newTodo = {
+    todos.push({
         id: Date.now(),
         text: text,
         completed: false
-    };
+    });
     
-    todos.push(newTodo);
-    saveTodos();
+    saveTodosToStorage();
     renderTodos();
     todoInput.value = '';
     todoInput.focus();
 }
 
-// TODOを完了にする関数
+/**
+ * TODOを完了にする
+ */
 function completeTodo(id) {
     const todo = todos.find(t => t.id === id);
     if (todo) {
         todo.completed = true;
-        saveTodos();
+        saveTodosToStorage();
         renderTodos();
     }
 }
 
-// TODOを削除する関数
+/**
+ * TODOを削除
+ */
 function deleteTodo(id) {
     todos = todos.filter(t => t.id !== id);
-    saveTodos();
+    saveTodosToStorage();
     renderTodos();
 }
 
-// 完了したTODOを戻す関数
+/**
+ * 完了したTODOを戻す
+ */
 function returnTodo(id) {
     const todo = todos.find(t => t.id === id);
     if (todo) {
         todo.completed = false;
-        saveTodos();
+        saveTodosToStorage();
         renderTodos();
     }
 }
 
-// TODOリストを描画する関数
+/**
+ * TODOリストを描画
+ */
 function renderTodos() {
-    // 未完了のTODO
-    const incompleteTodos = todos.filter(t => !t.completed);
-    incompleteTodosList.innerHTML = '';
-    
-    if (incompleteTodos.length === 0) {
-        incompleteTodosList.innerHTML = '<li class="empty-message">未完了のTODOはありません</li>';
-    } else {
-        incompleteTodos.forEach(todo => {
-            const li = createTodoElement(todo, false);
-            incompleteTodosList.appendChild(li);
-        });
-    }
-    
-    // 完了したTODO
-    const completedTodos = todos.filter(t => t.completed);
-    completedTodosList.innerHTML = '';
-    
-    if (completedTodos.length === 0) {
-        completedTodosList.innerHTML = '<li class="empty-message">完了したTODOはありません</li>';
-    } else {
-        completedTodos.forEach(todo => {
-            const li = createTodoElement(todo, true);
-            completedTodosList.appendChild(li);
-        });
-    }
+    renderTodoList(incompleteTodosList, todos.filter(t => !t.completed), false);
+    renderTodoList(completedTodosList, todos.filter(t => t.completed), true);
 }
 
-// TODO要素を作成する関数
+/**
+ * TODOリストを描画（共通処理）
+ */
+function renderTodoList(container, todoList, isCompleted) {
+    container.innerHTML = '';
+    
+    if (todoList.length === 0) {
+        const message = isCompleted ? MESSAGES.emptyCompleted : MESSAGES.emptyIncomplete;
+        container.innerHTML = `<li class="empty-message">${message}</li>`;
+        return;
+    }
+    
+    todoList.forEach(todo => {
+        const li = createTodoElement(todo, isCompleted);
+        container.appendChild(li);
+    });
+}
+
+/**
+ * TODO要素を作成
+ */
 function createTodoElement(todo, isCompleted) {
     const li = document.createElement('li');
-    li.className = 'todo-item' + (isCompleted ? ' completed' : '');
+    li.className = `todo-item${isCompleted ? ' completed' : ''}`;
     
     const textSpan = document.createElement('span');
     textSpan.className = 'todo-text';
@@ -114,23 +150,12 @@ function createTodoElement(todo, isCompleted) {
     
     if (isCompleted) {
         // 完了したTODOには「戻す」ボタン
-        const returnButton = document.createElement('button');
-        returnButton.className = 'todo-button return-button';
-        returnButton.textContent = '戻す';
-        returnButton.addEventListener('click', () => returnTodo(todo.id));
+        const returnButton = createButton('戻す', 'return-button', () => returnTodo(todo.id));
         buttonGroup.appendChild(returnButton);
     } else {
         // 未完了のTODOには「完了」と「削除」ボタン
-        const completeButton = document.createElement('button');
-        completeButton.className = 'todo-button complete-button';
-        completeButton.textContent = '完了';
-        completeButton.addEventListener('click', () => completeTodo(todo.id));
-        
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'todo-button delete-button';
-        deleteButton.textContent = '削除';
-        deleteButton.addEventListener('click', () => deleteTodo(todo.id));
-        
+        const completeButton = createButton('完了', 'complete-button', () => completeTodo(todo.id));
+        const deleteButton = createButton('削除', 'delete-button', () => deleteTodo(todo.id));
         buttonGroup.appendChild(completeButton);
         buttonGroup.appendChild(deleteButton);
     }
@@ -141,8 +166,13 @@ function createTodoElement(todo, isCompleted) {
     return li;
 }
 
-// ローカルストレージに保存する関数
-function saveTodos() {
-    localStorage.setItem('todos', JSON.stringify(todos));
+/**
+ * ボタン要素を作成
+ */
+function createButton(text, className, onClick) {
+    const button = document.createElement('button');
+    button.className = `todo-button ${className}`;
+    button.textContent = text;
+    button.addEventListener('click', onClick);
+    return button;
 }
-
