@@ -14,6 +14,7 @@ interface TodoListProps {
     onComplete: (id: number) => void;
     onDelete: (id: number) => void;
     onReturn: (id: number) => void;
+    onUpdate: (id: number, updates: Partial<Todo>) => void;
     emptyMessage: string;
 }
 
@@ -23,6 +24,7 @@ export default function TodoList({
     onComplete,
     onDelete,
     onReturn,
+    onUpdate,
     emptyMessage,
 }: TodoListProps) {
     return (
@@ -38,14 +40,15 @@ export default function TodoList({
                         borderColor: '#e0e7ff',
                     }}
                 >
-                    <InboxIcon 
-                        sx={{ 
-                            fontSize: 80, 
-                            background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%)',
+                    <InboxIcon
+                        sx={{
+                            fontSize: 80,
+                            background:
+                                'linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             marginBottom: 3,
-                        }} 
+                        }}
                     />
                     <Typography
                         variant="body1"
@@ -60,13 +63,14 @@ export default function TodoList({
                 </Paper>
             ) : (
                 <Box sx={{ paddingTop: '8px' }}>
-                    {todos.map((todo, index) => (
+                    {todos.map((todo) => (
                         <TodoItem
                             key={todo.id}
                             todo={todo}
                             onComplete={onComplete}
                             onDelete={onDelete}
                             onReturn={onReturn}
+                            onUpdate={onUpdate}
                         />
                     ))}
                 </Box>
